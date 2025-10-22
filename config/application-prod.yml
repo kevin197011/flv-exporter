@@ -1,0 +1,52 @@
+spring:
+  application:
+    name: flv-exporter
+
+# 生产环境配置
+logging:
+  level:
+    io.github.devops.flvexporter: INFO
+    org.springframework: WARN
+    org.springframework.web: WARN
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+    file: "%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n"
+  file:
+    name: /app/logs/flv-exporter.log
+    max-size: 100MB
+    max-history: 30
+
+# Prometheus metrics endpoint
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    prometheus:
+      access: unrestricted
+    health:
+      show-details: when-authorized
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  server:
+    port: 8080
+
+# 生产环境FLV检测配置
+flv:
+  check:
+    interval: 60000  # 生产环境1分钟检测一次
+    timeout: 20000   # 生产环境20秒超时
+    threads: 50      # 生产环境支持更多并发
+    retries: 5       # 生产环境更多重试次数
+  urls:
+    # 生产环境请替换为实际的FLV流地址
+    production:
+      - https://your-cdn.com/live/stream1.flv
+      - https://your-cdn.com/live/stream2.flv
+      - https://your-cdn.com/live/stream3.flv
+    backup:
+      - https://backup-cdn.com/live/stream1.flv
+      - https://backup-cdn.com/live/stream2.flv

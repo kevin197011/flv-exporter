@@ -1,0 +1,26 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+rule_files:
+  - "alert_rules.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
+
+scrape_configs:
+  # Prometheus 自身监控
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  # FLV Exporter 监控
+  - job_name: 'flv-exporter'
+    static_configs:
+      - targets: ['flv-exporter:8080']
+    metrics_path: '/actuator/prometheus'
+    scrape_interval: 30s
+    scrape_timeout: 10s

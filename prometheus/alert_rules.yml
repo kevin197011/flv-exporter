@@ -1,0 +1,57 @@
+groups:
+  - name: flv_stream_alerts
+    rules:
+      # FLV流离线告警
+      - alert: FLVStreamDown
+        expr: flv_stream_status == 0
+        for: 2m
+        labels:
+          severity: critical
+          service: flv-exporter
+        annotations:
+          summary: "FLV流 {{ $labels.stream_name }} 离线"
+          description: "项目 {{ $labels.project }} 的FLV流 {{ $labels.stream_name }} ({{ $labels.stream_url }}) 已离线超过2分钟"
+
+      # FLV流响应时间过高告警
+      - alert: FLVStreamHighLatency
+        expr: flv_stream_response_time_ms > 5000
+        for: 3m
+        labels:
+          severity: warning
+          service: flv-exporter
+        annotations:
+          summary: "FLV流 {{ $labels.stream_name }} 响应时间过高"
+          description: "项目 {{ $labels.project }} 的FLV流 {{ $labels.stream_name }} 响应时间为 {{ $value }}ms，超过5秒阈值"
+
+      # 项目成功率低告警
+      - alert: FLVProjectLowSuccessRate
+        expr: sum(rate(flv_checks_successful_total[5m])) by (project) / sum(rate(flv_checks_total[5m])) by (project) * 100 < 80
+        for: 5m
+        labels:
+          severity: warning
+          service: flv-exporter
+        annotations:
+          summary: "项目 {{ $labels.project }} 检测成功率过低"
+          description: "项目 {{ $labels.project }} 的检测成功率为 {{ printf \"%.1f\" $value }}%，低于80%阈值"
+
+      # FLV Exporter 服务离线告警
+      - alert: FLVExporterDown
+        expr: up{job="flv-exporter"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          service: flv-exporter
+        annotations:
+          summary: "FLV Exporter 服务离线"
+          description: "FLV Exporter 服务已离线超过1分钟，请检查服务状态"
+
+      # 大量流同时离线告警
+      - alert: FLVMassiveStreamFailure
+        expr: sum(flv_stream_status == 0) > 5
+        for: 2m
+        labels:
+          severity: critical
+          service: flv-exporter
+        annotations:
+          summary: "大量FLV流同时离线"
+          description: "当前有 {{ $value }} 个FLV流离线，可能存在网络或服务问题"

@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: flv-exporter
+
+# Prometheus metrics endpoint
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    prometheus:
+      access: unrestricted
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+
+# FLV检测配置
+flv:
+  check:
+    interval: 30000  # 检测间隔(毫秒)，默认30秒
+    timeout: 10000   # 连接超时(毫秒)，默认10秒
+    threads: 10      # 并发检测线程数，默认10个
+    retries: 3       # 失败重试次数，默认3次
+  urls:
+    demo:
+      - https://sample-videos.com/zip/10/flv/SampleVideo_1280x720_1mb.flv
+      - https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-flv-file.flv
+      - https://file-examples.com/storage/fe68c9fa7d66f447a9c5f83/2017/10/file_example_FLV_1280_1_4MB.flv
+    test:
+      - https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.flv
+      - https://media.w3.org/2010/05/sintel/trailer.flv
+      - https://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_surround-fix.flv
+    live:
+      - https://vjs.zencdn.net/v/oceans.flv
+      - https://www.html5rocks.com/en/tutorials/video/basics/devstories.flv
+      - https://techslides.com/demos/sample-videos/small.flv
