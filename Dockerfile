@@ -18,17 +18,19 @@ COPY src src
 RUN gradle build --no-daemon -x test
 
 # 运行阶段
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:17-jre
 
 # 安装必要工具和设置时区
-RUN apk add --no-cache curl tzdata && \
-    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends curl tzdata && \
+    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
-    apk del tzdata
+    apt-get clean && \
+    rm -rf /var/lib/apt/lists/*
 
 # 创建应用用户
-RUN addgroup -g 1000 flvexporter && \
-    adduser -D -s /bin/sh -u 1000 -G flvexporter flvexporter
+RUN groupadd -g 1000 flvexporter && \
+    useradd -r -u 1000 -g flvexporter flvexporter
 
 # 设置工作目录
 WORKDIR /app
