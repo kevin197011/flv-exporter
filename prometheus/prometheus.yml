@@ -17,7 +17,7 @@ scrape_configs:
     static_configs:
       - targets: ['localhost:9090']
 
-  # FLV Exporter 监控
+  # FLV Exporter 监控 (仅FLV指标)
   - job_name: 'flv-exporter'
     static_configs:
       - targets: ['flv-exporter:8080']

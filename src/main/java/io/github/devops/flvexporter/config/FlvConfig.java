@@ -45,18 +45,18 @@ public class FlvConfig {
     // 从URL中提取路径部分和流ID
     private String[] extractPathAndId(String url) {
         try {
-            // 解析URL，如 "https://xxx.xxx.com/PT/107015.flv"
-            // 提取路径部分 "/PT/107015.flv"
+            // 解析URL，如 "https://xxx.xxx.com/video/test.flv"
+            // 提取路径部分 "/video/test.flv"
             String path = url.substring(url.indexOf("://") + 3);
             int pathStart = path.indexOf('/');
             if (pathStart != -1) {
-                String fullPath = path.substring(pathStart + 1); // "PT/107015.flv"
+                String fullPath = path.substring(pathStart + 1); // "video/test.flv"
                 
                 // 分割路径和文件名
                 String[] pathParts = fullPath.split("/");
                 if (pathParts.length >= 2) {
-                    String pathPart = pathParts[pathParts.length - 2]; // "PT"
-                    String fileName = pathParts[pathParts.length - 1]; // "107015.flv"
+                    String pathPart = pathParts[pathParts.length - 2]; // "video"
+                    String fileName = pathParts[pathParts.length - 1]; // "test.flv"
                     
                     // 移除扩展名，得到流ID
                     String streamId = fileName;

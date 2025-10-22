@@ -27,6 +27,20 @@ management:
     metrics:
       export:
         enabled: true
+  metrics:
+    enable:
+      # 禁用所有默认指标
+      jvm: false
+      system: false
+      process: false
+      http: false
+      tomcat: false
+      logback: false
+      hikaricp: false
+      jdbc: false
+    export:
+      prometheus:
+        enabled: true
   server:
     port: 8080
 
