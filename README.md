@@ -12,6 +12,7 @@
 - 🏷️ 支持按项目分组管理流URL
 - 🔍 支持响应时间监控
 - 📈 提供详细的成功/失败统计
+- 🚀 GitHub Actions自动构建和发布Docker镜像
 
 ## 监控指标
 
@@ -61,10 +62,10 @@ flv:
     threads: 10      # 并发检测线程数，默认10个
     retries: 3       # 失败重试次数，默认3次
   urls:
-    g01:  # 项目名称，会作为监控指标的project标签
+    a01:  # 项目名称，会作为监控指标的project标签
       - https://example.com/stream1.flv
       - https://example.com/stream2.flv
-    g02:
+    a02:
       - https://example.com/stream3.flv
       - https://example.com/stream4.flv
 ```
@@ -111,14 +112,10 @@ flv:
 ./gradlew build
 ```
 
-### Docker部署
+### Docker Compose部署
 ```bash
 # 快速启动（包含Prometheus + Grafana + AlertManager）
 docker-compose up -d
-
-# 仅启动FLV Exporter
-docker build -t flv-exporter .
-docker run -p 8080:8080 flv-exporter
 ```
 
 详细部署说明请参考 [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
