@@ -29,8 +29,8 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 # 创建应用用户
-RUN groupadd -g 1000 flvexporter && \
-    useradd -r -u 1000 -g flvexporter flvexporter
+RUN groupadd -r flvexporter && \
+    useradd -r -g flvexporter flvexporter
 
 # 设置工作目录
 WORKDIR /app
