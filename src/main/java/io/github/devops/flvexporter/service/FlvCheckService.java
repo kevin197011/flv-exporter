@@ -66,22 +66,68 @@ public class FlvCheckService {
         });
         
         // 初始化OkHttp客户端
-        this.httpClient = new OkHttpClient.Builder()
-                .connectTimeout(Duration.ofMillis(checkTimeout))
-                .readTimeout(Duration.ofMillis(checkTimeout * 2))
-                .writeTimeout(Duration.ofMillis(checkTimeout))
-                .callTimeout(Duration.ofMillis(checkTimeout * 3))
-                .retryOnConnectionFailure(true)
-                .followRedirects(true)
-                .followSslRedirects(true)
-                // 信任所有证书（仅用于测试）
-                .hostnameVerifier((hostname, session) -> true)
-                .build();
+        this.httpClient = createUnsafeOkHttpClient();
         
         // 注册Gauge指标
         registerGauges();
         
         logger.info("FLV检测服务初始化完成，线程池大小: {}, HTTP客户端: OkHttp", checkThreads);
+    }
+    
+    private OkHttpClient createUnsafeOkHttpClient() {
+        try {
+            // 创建信任所有证书的TrustManager
+            final javax.net.ssl.TrustManager[] trustAllCerts = new javax.net.ssl.TrustManager[]{
+                new javax.net.ssl.X509TrustManager() {
+                    @Override
+                    public void checkClientTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                        // 信任所有客户端证书
+                    }
+
+                    @Override
+                    public void checkServerTrusted(java.security.cert.X509Certificate[] chain, String authType) {
+                        // 信任所有服务器证书
+                    }
+
+                    @Override
+                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                        return new java.security.cert.X509Certificate[]{};
+                    }
+                }
+            };
+
+            // 创建SSL上下文
+            final javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("SSL");
+            sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
+
+            // 创建SSL Socket Factory
+            final javax.net.ssl.SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
+
+            return new OkHttpClient.Builder()
+                    .connectTimeout(Duration.ofMillis(checkTimeout))
+                    .readTimeout(Duration.ofMillis(checkTimeout * 2))
+                    .writeTimeout(Duration.ofMillis(checkTimeout))
+                    .callTimeout(Duration.ofMillis(checkTimeout * 3))
+                    .retryOnConnectionFailure(true)
+                    .followRedirects(true)
+                    .followSslRedirects(true)
+                    .sslSocketFactory(sslSocketFactory, (javax.net.ssl.X509TrustManager) trustAllCerts[0])
+                    .hostnameVerifier((hostname, session) -> true)
+                    .build();
+
+        } catch (Exception e) {
+            logger.error("创建不安全的HTTP客户端失败: {}", e.getMessage());
+            // 如果创建失败，返回默认客户端
+            return new OkHttpClient.Builder()
+                    .connectTimeout(Duration.ofMillis(checkTimeout))
+                    .readTimeout(Duration.ofMillis(checkTimeout * 2))
+                    .writeTimeout(Duration.ofMillis(checkTimeout))
+                    .callTimeout(Duration.ofMillis(checkTimeout * 3))
+                    .retryOnConnectionFailure(true)
+                    .followRedirects(true)
+                    .followSslRedirects(true)
+                    .build();
+        }
     }
     
     private void registerGauges() {
