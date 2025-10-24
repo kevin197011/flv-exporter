@@ -2,7 +2,6 @@ spring:
   application:
     name: flv-exporter
 
-# 基础配置 - 如果没有外部配置文件，使用此默认配置
 management:
   endpoints:
     web:

@@ -14,7 +14,7 @@ RUN gradle dependencies --no-daemon
 # 复制源代码
 COPY src src
 
-# 构建应用（不包含配置文件）
+# 构建应用
 RUN gradle bootJar --no-daemon -x test
 
 # 运行阶段
@@ -35,7 +35,7 @@ RUN groupadd -r flvexporter && \
 # 设置工作目录
 WORKDIR /app
 
-# 复制构建的jar文件（不包含配置）
+# 复制构建的jar文件
 COPY --from=builder /app/build/libs/*.jar app.jar
 
 # 创建配置和日志目录
@@ -55,5 +55,5 @@ EXPOSE 8080
 # JVM参数优化
 ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
 
-# 启动应用（指定外部配置文件路径）
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.config.location=classpath:/,file:/app/config/ -jar app.jar"]
+# 启动应用
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.config.additional-location=file:/app/config/ -jar app.jar"]

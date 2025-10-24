@@ -15,7 +15,7 @@ services:
       - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC
     volumes:
       - ./logs:/app/logs
-      - ./config:/app/config
+      - ./config/application.yml:/app/config/application.yml:ro
     networks:
       - monitoring
     depends_on:
