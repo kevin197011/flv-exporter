@@ -52,8 +52,14 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # 暴露端口
 EXPOSE 8080
 
-# JVM参数优化
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
+# JVM参数优化 - 包含SSL兼容性设置
+ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport \
+    -Djava.security.egd=file:/dev/./urandom \
+    -Djdk.tls.disabledAlgorithms=SSLv3,RC4,DES,MD5withRSA,DH_anon,ECDH_anon,NULL \
+    -Djdk.certpath.disabledAlgorithms=MD2,MD5 \
+    -Dcom.sun.net.ssl.checkRevocation=false \
+    -Djdk.tls.allowUnsafeRenegotiation=true \
+    -Dtrust_all_cert=true"
 
-# 启动应用（完全使用外部配置文件）
+# 启动应用
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.config.location=file:/app/config/application.yml -jar app.jar"]

@@ -357,22 +357,30 @@ public class FlvCheckService {
     private boolean checkFlvStream(String streamUrl) {
         Request request = new Request.Builder()
                 .url(streamUrl)
-                .head() // 使用HEAD请求，更高效
+                .get() // 改为GET请求，读取少量数据
                 .addHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
                 .addHeader("Accept", "*/*")
+                .addHeader("Range", "bytes=0-1023") // 只请求前1KB数据
                 .build();
         
         try (Response response = httpClient.newCall(request).execute()) {
             int responseCode = response.code();
             String contentType = response.header("Content-Type");
             
-            logger.debug("检测FLV流 {} - 响应码: {}, Content-Type: {}", streamUrl, responseCode, contentType);
+            // 读取少量数据验证连接
+            if (response.body() != null) {
+                byte[] data = response.body().bytes();
+                logger.debug("检测FLV流 {} - 响应码: {}, Content-Type: {}, 数据长度: {}", 
+                           streamUrl, responseCode, contentType, data.length);
+            }
             
-            // 200状态码即认为成功
-            boolean isValid = responseCode == 200;
+            // 200或206状态码都认为成功 (206是Range请求的正常响应)
+            boolean isValid = responseCode == 200 || responseCode == 206;
             
             if (!isValid) {
-                logger.warn("FLV流检测失败 {} - 响应码: {}, Content-Type: {}", streamUrl, responseCode, contentType);
+                logger.error("FLV流检测失败 {} - 响应码: {}, Content-Type: {}", streamUrl, responseCode, contentType);
+            } else {
+                logger.info("FLV流检测成功 {} - 响应码: {}", streamUrl, responseCode);
             }
             
             return isValid;
