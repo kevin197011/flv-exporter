@@ -55,5 +55,5 @@ EXPOSE 8080
 # JVM参数优化
 ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport -Djava.security.egd=file:/dev/./urandom"
 
-# 启动应用
-ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.config.additional-location=file:/app/config/ -jar app.jar"]
+# 启动应用（完全使用外部配置文件）
+ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.config.location=file:/app/config/application.yml -jar app.jar"]

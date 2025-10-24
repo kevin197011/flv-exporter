@@ -35,6 +35,4 @@ flv:
     timeout: 10000
     threads: 10
     retries: 3
-  urls:
-    default:
-      - https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-flv-file.flv
+  urls: {}

@@ -33,6 +33,7 @@ flv:
     threads: 5       # 并发检测线程数，减少并发避免资源竞争
     retries: 2       # 失败重试次数，减少重试
   urls:
+    default: []  # 明确清空默认配置
     demo:
       - https://sample-videos.com/zip/10/flv/SampleVideo_1280x720_1mb.flv
       - https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-flv-file.flv
