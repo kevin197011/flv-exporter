@@ -303,16 +303,30 @@ public class FlvCheckService {
             // 设置请求属性
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(checkTimeout);
-            connection.setReadTimeout(checkTimeout);
+            connection.setReadTimeout(checkTimeout * 2); // 读取超时设为连接超时的2倍
             connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
             connection.setRequestProperty("Accept", "*/*");
-            connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
-            connection.setRequestProperty("Connection", "keep-alive");
+            connection.setRequestProperty("Connection", "close"); // 使用短连接，避免连接池问题
             
-            // 禁用SSL验证（如果是HTTPS）
+            // 禁用SSL验证和优化SSL配置（如果是HTTPS）
             if (connection instanceof javax.net.ssl.HttpsURLConnection) {
                 javax.net.ssl.HttpsURLConnection httpsConnection = (javax.net.ssl.HttpsURLConnection) connection;
                 httpsConnection.setHostnameVerifier((hostname, session) -> true);
+                
+                // 创建信任所有证书的SSL上下文
+                try {
+                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
+                    sslContext.init(null, new javax.net.ssl.TrustManager[]{
+                        new javax.net.ssl.X509TrustManager() {
+                            public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
+                            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
+                        }
+                    }, new java.security.SecureRandom());
+                    httpsConnection.setSSLSocketFactory(sslContext.getSocketFactory());
+                } catch (Exception e) {
+                    logger.debug("SSL配置失败: {}", e.getMessage());
+                }
             }
             
             // 获取响应码

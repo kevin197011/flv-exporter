@@ -29,9 +29,9 @@ management:
 flv:
   check:
     interval: 30000  # 检测间隔(毫秒)，默认30秒
-    timeout: 30000   # 连接超时(毫秒)，增加到30秒
-    threads: 10      # 并发检测线程数，默认10个
-    retries: 3       # 失败重试次数，默认3次
+    timeout: 60000   # 连接超时(毫秒)，增加到60秒
+    threads: 5       # 并发检测线程数，减少并发避免资源竞争
+    retries: 2       # 失败重试次数，减少重试
   urls:
     demo:
       - https://sample-videos.com/zip/10/flv/SampleVideo_1280x720_1mb.flv
