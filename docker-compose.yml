@@ -11,9 +11,9 @@ services:
     network_mode: "host"  # 使用主机网络，绕过Docker网络限制
     environment:
       - SPRING_PROFILES_ACTIVE=docker
-      - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC -Djava.net.useSystemProxies=true -Dcom.sun.net.ssl.checkRevocation=false -Dtrust_all_cert=true
-      - LOGGING_LEVEL_ROOT=INFO
-      - LOGGING_LEVEL_IO_GITHUB_DEVOPS_FLVEXPORTER=DEBUG
+      - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC -Djava.net.useSystemProxies=true -Dcom.sun.net.ssl.checkRevocation=false -Dtrust_all_cert=true -Djdk.tls.client.protocols=TLSv1.2 -Dhttps.protocols=TLSv1.2 -Dcom.sun.net.ssl.enableECC=false -Djdk.tls.ephemeralDHKeySize=2048
+      - LOGGING_LEVEL_ROOT=WARN
+      - LOGGING_LEVEL_IO_GITHUB_DEVOPS_FLVEXPORTER=INFO
     volumes:
       - ./logs:/app/logs
       - ./config/application.yml:/app/config/application.yml:ro

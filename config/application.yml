@@ -28,10 +28,10 @@ management:
 # FLV检测配置
 flv:
   check:
-    interval: 30000  # 检测间隔(毫秒)，默认30秒
-    timeout: 60000   # 连接超时(毫秒)，增加到60秒
-    threads: 5       # 并发检测线程数，减少并发避免资源竞争
-    retries: 2       # 失败重试次数，减少重试
+    interval: 30000  # 检测间隔(毫秒)，30秒
+    timeout: 15000   # 连接超时(毫秒)，15秒
+    threads: 10      # 并发检测线程数
+    retries: 2       # 失败重试次数
   urls:
     default: []  # 明确清空默认配置
     demo:

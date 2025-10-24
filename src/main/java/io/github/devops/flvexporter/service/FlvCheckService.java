@@ -14,9 +14,8 @@ import org.springframework.stereotype.Service;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 
+import okhttp3.*;
 import java.io.IOException;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -32,6 +31,7 @@ public class FlvCheckService {
     private final FlvConfig flvConfig;
     private final MeterRegistry meterRegistry;
     private ExecutorService executorService;
+    private OkHttpClient httpClient;
     
     @Value("${flv.check.timeout:10000}")
     private int checkTimeout;
@@ -65,10 +65,23 @@ public class FlvCheckService {
             return t;
         });
         
+        // 初始化OkHttp客户端
+        this.httpClient = new OkHttpClient.Builder()
+                .connectTimeout(Duration.ofMillis(checkTimeout))
+                .readTimeout(Duration.ofMillis(checkTimeout * 2))
+                .writeTimeout(Duration.ofMillis(checkTimeout))
+                .callTimeout(Duration.ofMillis(checkTimeout * 3))
+                .retryOnConnectionFailure(true)
+                .followRedirects(true)
+                .followSslRedirects(true)
+                // 信任所有证书（仅用于测试）
+                .hostnameVerifier((hostname, session) -> true)
+                .build();
+        
         // 注册Gauge指标
         registerGauges();
         
-        logger.info("FLV检测服务初始化完成，线程池大小: {}", checkThreads);
+        logger.info("FLV检测服务初始化完成，线程池大小: {}, HTTP客户端: OkHttp", checkThreads);
     }
     
     private void registerGauges() {
@@ -296,50 +309,20 @@ public class FlvCheckService {
     }
     
     private boolean checkFlvStream(String streamUrl) {
-        try {
-            URL url = new URL(streamUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            
-            // 设置请求属性
-            connection.setRequestMethod("HEAD");
-            connection.setConnectTimeout(checkTimeout);
-            connection.setReadTimeout(checkTimeout * 2); // 读取超时设为连接超时的2倍
-            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
-            connection.setRequestProperty("Accept", "*/*");
-            connection.setRequestProperty("Connection", "close"); // 使用短连接，避免连接池问题
-            
-            // 禁用SSL验证和优化SSL配置（如果是HTTPS）
-            if (connection instanceof javax.net.ssl.HttpsURLConnection) {
-                javax.net.ssl.HttpsURLConnection httpsConnection = (javax.net.ssl.HttpsURLConnection) connection;
-                httpsConnection.setHostnameVerifier((hostname, session) -> true);
-                
-                // 创建信任所有证书的SSL上下文
-                try {
-                    javax.net.ssl.SSLContext sslContext = javax.net.ssl.SSLContext.getInstance("TLS");
-                    sslContext.init(null, new javax.net.ssl.TrustManager[]{
-                        new javax.net.ssl.X509TrustManager() {
-                            public java.security.cert.X509Certificate[] getAcceptedIssuers() { return null; }
-                            public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
-                            public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) { }
-                        }
-                    }, new java.security.SecureRandom());
-                    httpsConnection.setSSLSocketFactory(sslContext.getSocketFactory());
-                } catch (Exception e) {
-                    logger.debug("SSL配置失败: {}", e.getMessage());
-                }
-            }
-            
-            // 获取响应码
-            int responseCode = connection.getResponseCode();
-            
-            // 检查Content-Type是否为FLV相关
-            String contentType = connection.getContentType();
+        Request request = new Request.Builder()
+                .url(streamUrl)
+                .head() // 使用HEAD请求，更高效
+                .addHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36")
+                .addHeader("Accept", "*/*")
+                .build();
+        
+        try (Response response = httpClient.newCall(request).execute()) {
+            int responseCode = response.code();
+            String contentType = response.header("Content-Type");
             
             logger.debug("检测FLV流 {} - 响应码: {}, Content-Type: {}", streamUrl, responseCode, contentType);
             
-            connection.disconnect();
-            
-            // 200状态码，对Content-Type要求放宽
+            // 200状态码即认为成功
             boolean isValid = responseCode == 200;
             
             if (!isValid) {
@@ -347,15 +330,14 @@ public class FlvCheckService {
             }
             
             return isValid;
-                     
+            
         } catch (IOException e) {
             logger.error("检测FLV流网络异常 {} - {}: {}", streamUrl, e.getClass().getSimpleName(), e.getMessage());
-            e.printStackTrace(); // 打印完整堆栈跟踪
             return false;
         }
     }
     
-    // 应用关闭时清理线程池
+    // 应用关闭时清理资源
     @PreDestroy
     public void destroy() {
         if (executorService != null && !executorService.isShutdown()) {
@@ -369,6 +351,12 @@ public class FlvCheckService {
                 executorService.shutdownNow();
                 Thread.currentThread().interrupt();
             }
+        }
+        
+        if (httpClient != null) {
+            logger.info("关闭HTTP客户端");
+            httpClient.dispatcher().executorService().shutdown();
+            httpClient.connectionPool().evictAll();
         }
     }
 }
