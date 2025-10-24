@@ -2,6 +2,15 @@ spring:
   application:
     name: flv-exporter
 
+# 日志配置
+logging:
+  level:
+    root: INFO
+    io.github.devops.flvexporter: DEBUG
+    org.springframework.web: DEBUG
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %5p --- [%15.15t] %-40.40logger{39} : %m%n"
+
 # Prometheus metrics endpoint
 management:
   endpoints:
@@ -20,7 +29,7 @@ management:
 flv:
   check:
     interval: 30000  # 检测间隔(毫秒)，默认30秒
-    timeout: 10000   # 连接超时(毫秒)，默认10秒
+    timeout: 30000   # 连接超时(毫秒)，增加到30秒
     threads: 10      # 并发检测线程数，默认10个
     retries: 3       # 失败重试次数，默认3次
   urls:

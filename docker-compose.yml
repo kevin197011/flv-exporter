@@ -13,11 +13,16 @@ services:
     environment:
       - SPRING_PROFILES_ACTIVE=docker
       - JAVA_OPTS=-Xms256m -Xmx512m -XX:+UseG1GC
+      - LOGGING_LEVEL_ROOT=DEBUG
+      - LOGGING_LEVEL_IO_GITHUB_DEVOPS_FLVEXPORTER=DEBUG
     volumes:
       - ./logs:/app/logs
       - ./config/application.yml:/app/config/application.yml:ro
     networks:
       - monitoring
+    dns:
+      - 8.8.8.8
+      - 8.8.4.4
     depends_on:
       - prometheus
     healthcheck:

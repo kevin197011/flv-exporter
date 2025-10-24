@@ -275,12 +275,12 @@ public class FlvCheckService {
                 }
                 
                 if (attempt < maxRetries) {
-                    logger.debug("FLV流 {} 第{}次检测失败，准备重试", streamName, attempt);
+                    logger.warn("FLV流 {} 第{}次检测失败，准备重试", streamName, attempt);
                     // 重试前等待一小段时间，避免立即重试
                     Thread.sleep(1000);
                 }
             } catch (Exception e) {
-                logger.debug("FLV流 {} 第{}次检测异常: {}", streamName, attempt, e.getMessage());
+                logger.error("FLV流 {} 第{}次检测异常: {} - {}", streamName, attempt, e.getClass().getSimpleName(), e.getMessage());
                 if (attempt < maxRetries) {
                     try {
                         Thread.sleep(1000);
@@ -304,7 +304,16 @@ public class FlvCheckService {
             connection.setRequestMethod("HEAD");
             connection.setConnectTimeout(checkTimeout);
             connection.setReadTimeout(checkTimeout);
-            connection.setRequestProperty("User-Agent", "FLV-Exporter/1.0");
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            connection.setRequestProperty("Accept", "*/*");
+            connection.setRequestProperty("Accept-Encoding", "gzip, deflate");
+            connection.setRequestProperty("Connection", "keep-alive");
+            
+            // 禁用SSL验证（如果是HTTPS）
+            if (connection instanceof javax.net.ssl.HttpsURLConnection) {
+                javax.net.ssl.HttpsURLConnection httpsConnection = (javax.net.ssl.HttpsURLConnection) connection;
+                httpsConnection.setHostnameVerifier((hostname, session) -> true);
+            }
             
             // 获取响应码
             int responseCode = connection.getResponseCode();
@@ -312,17 +321,22 @@ public class FlvCheckService {
             // 检查Content-Type是否为FLV相关
             String contentType = connection.getContentType();
             
+            logger.debug("检测FLV流 {} - 响应码: {}, Content-Type: {}", streamUrl, responseCode, contentType);
+            
             connection.disconnect();
             
-            // 200状态码且Content-Type包含video或flv相关信息
-            return responseCode == 200 && 
-                   (contentType != null && 
-                    (contentType.contains("video") || 
-                     contentType.contains("flv") || 
-                     contentType.contains("application/octet-stream")));
+            // 200状态码，对Content-Type要求放宽
+            boolean isValid = responseCode == 200;
+            
+            if (!isValid) {
+                logger.warn("FLV流检测失败 {} - 响应码: {}, Content-Type: {}", streamUrl, responseCode, contentType);
+            }
+            
+            return isValid;
                      
         } catch (IOException e) {
-            logger.debug("检测FLV流失败: {}", e.getMessage());
+            logger.error("检测FLV流网络异常 {} - {}: {}", streamUrl, e.getClass().getSimpleName(), e.getMessage());
+            e.printStackTrace(); // 打印完整堆栈跟踪
             return false;
         }
     }
