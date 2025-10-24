@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: flv-exporter
+
+# 基础配置 - 如果没有外部配置文件，使用此默认配置
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,prometheus
+  endpoint:
+    prometheus:
+      access: unrestricted
+  prometheus:
+    metrics:
+      export:
+        enabled: true
+  metrics:
+    enable:
+      jvm: false
+      system: false
+      process: false
+      http: false
+      tomcat: false
+      logback: false
+      hikaricp: false
+      jdbc: false
+    export:
+      prometheus:
+        enabled: true
+
+# 默认FLV配置 - 请通过外部配置文件覆盖
+flv:
+  check:
+    interval: 30000
+    timeout: 10000
+    threads: 10
+    retries: 3
+  urls:
+    default:
+      - https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-flv-file.flv

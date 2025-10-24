@@ -38,15 +38,10 @@ flv:
     threads: 20      # 并发检测线程数，默认10个
     retries: 3       # 失败重试次数，默认3次
   urls:
+    # 请根据实际需要配置FLV流URL
     demo:
-      - https://data.playground.edgeone.ai/resource/video/flv/demo-1/index.flv
-      - https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-flv-file.flv
-      - https://file-examples.com/storage/fe68c9fa7d66f447a9c5f83/2017/10/file_example_FLV_1280_1_4MB.flv
+      - https://example.com/stream1.flv
+      - https://example.com/stream2.flv
     test:
-      - https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.flv
-      - https://media.w3.org/2010/05/sintel/trailer.flv
-      - https://download.blender.org/peach/bigbuckbunny_movies/big_buck_bunny_480p_surround-fix.flv
-    live:
-      - https://vjs.zencdn.net/v/oceans.flv
-      - https://www.html5rocks.com/en/tutorials/video/basics/devstories.flv
-      - https://techslides.com/demos/sample-videos/small.flv
+      - https://example.com/stream3.flv
+      - https://example.com/stream4.flv

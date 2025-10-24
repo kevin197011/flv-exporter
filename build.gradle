@@ -30,3 +30,26 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// 构建不包含配置文件的JAR包
+jar {
+    enabled = true
+    archiveClassifier = ''
+    exclude 'application*.yml'
+    exclude 'application*.yaml'
+    exclude 'application*.properties'
+}
+
+// 创建包含配置文件的JAR包（用于开发）
+task bootJarWithConfig(type: org.springframework.boot.gradle.tasks.bundling.BootJar) {
+    archiveClassifier = 'with-config'
+    from sourceSets.main.output
+}
+
+// 默认的bootJar任务排除用户配置文件，保留默认配置
+bootJar {
+    exclude 'application.yml'
+    exclude 'application.yaml' 
+    exclude 'application.properties'
+    // 保留 application-default.yml 等其他配置文件
+}

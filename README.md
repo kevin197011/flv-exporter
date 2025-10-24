@@ -114,8 +114,32 @@ flv:
 
 ### Docker Compose部署
 ```bash
-# 快速启动（包含Prometheus + Grafana + AlertManager）
+# 1. 复制配置文件模板
+cp config/application-example.yml config/application.yml
+
+# 2. 编辑配置文件，添加你的FLV流URL
+vim config/application.yml
+
+# 3. 启动服务（包含Prometheus + Grafana + AlertManager）
 docker-compose up -d
+```
+
+### Docker单独部署
+```bash
+# 1. 准备配置文件
+mkdir -p ./config
+cp config/application-example.yml ./config/application.yml
+
+# 2. 编辑配置文件
+vim ./config/application.yml
+
+# 3. 运行容器
+docker run -d \
+  --name flv-exporter \
+  -p 8080:8080 \
+  -v ./config:/app/config \
+  -v ./logs:/app/logs \
+  ghcr.io/your-username/flv-exporter:latest
 ```
 
 详细部署说明请参考 [DOCKER_DEPLOYMENT.md](DOCKER_DEPLOYMENT.md)
