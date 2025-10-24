@@ -1,5 +1,5 @@
-# 多阶段构建 - 构建阶段
-FROM gradle:8.5-jdk17 AS builder
+# 多阶段构建 - 构建阶段 (使用Java 11，SSL兼容性更好)
+FROM gradle:7.6-jdk11 AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -17,8 +17,8 @@ COPY src src
 # 构建应用
 RUN gradle bootJar --no-daemon -x test
 
-# 运行阶段
-FROM eclipse-temurin:17-jre
+# 运行阶段 (使用Java 11，对旧SSL算法更宽松)
+FROM eclipse-temurin:11-jre
 
 # 安装必要工具和设置时区
 RUN apt-get update && \
@@ -52,13 +52,12 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # 暴露端口
 EXPOSE 8080
 
-# JVM参数优化 - 包含SSL兼容性设置
-ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC -XX:+UseContainerSupport \
+# JVM参数优化 - Java 11兼容性设置
+ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC \
     -Djava.security.egd=file:/dev/./urandom \
-    -Djdk.tls.disabledAlgorithms=SSLv3,RC4,DES,MD5withRSA,DH_anon,ECDH_anon,NULL \
+    -Djdk.tls.disabledAlgorithms=SSLv3,RC4,DES \
     -Djdk.certpath.disabledAlgorithms=MD2,MD5 \
     -Dcom.sun.net.ssl.checkRevocation=false \
-    -Djdk.tls.allowUnsafeRenegotiation=true \
     -Dtrust_all_cert=true"
 
 # 启动应用
