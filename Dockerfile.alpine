@@ -1,5 +1,6 @@
-# 多阶段构建 - 构建阶段 (使用Ubuntu 18.04基础的Java 11)
-FROM gradle:7.6-jdk11-focal AS builder
+# 备选Dockerfile - 使用Alpine Linux (对SSL算法更宽松)
+# 多阶段构建 - 构建阶段
+FROM gradle:7.6-jdk11-alpine AS builder
 
 # 设置工作目录
 WORKDIR /app
@@ -17,26 +18,25 @@ COPY src src
 # 构建应用
 RUN gradle bootJar --no-daemon -x test
 
-# 运行阶段 (使用CentOS 7，对旧SSL算法最宽松)
-FROM centos:7
+# 运行阶段 - Alpine Linux (SSL策略更宽松)
+FROM openjdk:11-jre-alpine
 
-# 安装Java 11和必要工具 (CentOS 7对SHA1withRSA等算法更宽松)
-RUN yum update -y && \
-    yum install -y \
-        java-11-openjdk-headless \
+# 安装必要工具 (Alpine对旧SSL算法更宽松)
+RUN apk add --no-cache \
         curl \
-        ca-certificates \
-        tzdata && \
+        tzdata \
+        ca-certificates && \
     # 设置时区
-    ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
+    cp /usr/share/zoneinfo/Asia/Shanghai /etc/localtime && \
     echo "Asia/Shanghai" > /etc/timezone && \
-    # 清理缓存
-    yum clean all && \
-    rm -rf /var/cache/yum
+    # 更新CA证书
+    update-ca-certificates && \
+    # 清理
+    apk del tzdata
 
 # 创建应用用户
-RUN groupadd -r flvexporter && \
-    useradd -r -g flvexporter flvexporter
+RUN addgroup -g 1000 flvexporter && \
+    adduser -D -s /bin/sh -u 1000 -G flvexporter flvexporter
 
 # 设置工作目录
 WORKDIR /app
@@ -58,14 +58,11 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
 # 暴露端口
 EXPOSE 8080
 
-# JVM参数优化 - CentOS 7 + Java 11兼容性设置
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# JVM参数优化 - Alpine + Java 11 (最宽松的SSL设置)
 ENV JAVA_OPTS="-Xms256m -Xmx512m -XX:+UseG1GC \
     -Djava.security.egd=file:/dev/./urandom \
     -Djava.net.useSystemProxies=true \
-    -Dcom.sun.net.ssl.checkRevocation=false \
-    -Dtrust_all_cert=true"
+    -Dcom.sun.net.ssl.checkRevocation=false"
 
 # 启动应用
 ENTRYPOINT ["sh", "-c", "java $JAVA_OPTS -Dspring.config.location=file:/app/config/application.yml -jar app.jar"]

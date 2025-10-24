@@ -3,9 +3,8 @@ services:
   flv-exporter:
     build:
       context: .
-      dockerfile: Dockerfile
-      # 如果Alpine镜像有问题，可以使用Ubuntu版本
-      # dockerfile: Dockerfile.ubuntu
+      dockerfile: Dockerfile  # CentOS 7版本 (推荐，SSL兼容性最好)
+      # dockerfile: Dockerfile.alpine  # Alpine版本 (备选)
     container_name: flv-exporter
     restart: unless-stopped
     network_mode: "host"  # 使用主机网络，绕过Docker网络限制
